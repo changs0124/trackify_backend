@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dev.trackify_backend.repository.JobMapper">
+    <resultMap id="jobResultMap" type="com.dev.trackify_backend.entity.Job">
+        <id property="id" column="jt_id" />
+        <result property="productCount" column="jt_product_count" />
+        <result property="paths" column="jt_paths" />
+        <result property="status" column="jt_status" />
+        <association property="cargo" resultMap="cargoResultMap" />
+        <association property="product" resultMap="productResultMap" />
+        <association property="user" resultMap="userResultMap" />
+    </resultMap>
+
+    <resultMap id="cargoResultMap" type="com.dev.trackify_backend.entity.Cargo">
+        <id property="id" column="ct_id" />
+        <result property="cargoName" column="ct_cargo_name"/>
+    </resultMap>
+
+    <resultMap id="productResultMap" type="com.dev.trackify_backend.entity.Product">
+        <id property="id" column="pt_id"/>
+        <result property="productName" column="pt_product_name" />
+        <result property="volume" column="pt_volume"/>
+    </resultMap>
+
+    <resultMap id="userResultMap" type="com.dev.trackify_backend.entity.User">
+        <id property="id" column="ut_id"/>
+        <result property="userName" column="ut_user_name"/>
+    </resultMap>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="id">
+        insert into job_tb
+        values(0, #{userId}, #{cargoId}, #{productId}, #{productCount}, "[]", 1, now(), now())
+    </insert>
+
+    <update id="update">
+        update job_tb
+        set
+            cargo_id = #{cargoId},
+            product_id = #{productId},
+            product_count = #{productCount}
+        where
+            id = #{id}
+    </update>
+
+    <update id="complete">
+        update job_tb
+        set
+            paths = #{paths},
+            status = 2,
+            end_date = now()
+        where
+            id = #{id}
+    </update>
+
+    <update id="cancel">
+        update job_tb
+        set
+            status = 0
+        where
+            id = #{id}
+    </update>
+
+    <select id="findByUserId" resultMap="jobResultMap">
+        select
+            jt.id as jt_id,
+            jt.product_count as jt_product_count,
+            jt.status as jt_status,
+            ct.id as ct_id,
+            ct.cargo_name as ct_cargo_name,
+            pt.id as pt_id,
+            pt.product_name as pt_product_name,
+            pt.volume as pt_volume
+        from
+            job_tb jt
+            left outer join cargo_tb ct on(jt.cargo_id = ct.id)
+            left outer join product_tb pt on(jt.product_id = pt.id)
+        where
+            jt.user_id = #{userId} and jt.status = 1
+        order by
+            jt.id desc
+        limit 1
+    </select>
+
+    <select id="findByCargoIdAndProductId" resultMap="jobResultMap">
+        select
+            jt.id as jt_id,
+            jt.product_count as jt_product_count,
+            jt.paths as jt_paths,
+            jt.start_time as jt_start_time,
+            jt.end_time as jt_end_time,
+            ct.id as ct_id,
+            ct.cargo_name as ct_cargo_name,
+            pt.id as pt_id,
+            pt.product_name as pt_product_name,
+            ut.id as ut_id,
+            ut.user_name as ut_user_name
+        from
+            job_tb as jt
+            left join cargo_tb ct on(jt.cargo_id = ct.id)
+            left join product_tb pt on(jt.product_id = pt.id)
+            left join user_tb ut on(jt.user_id = ut.id)
+        <where>
+            <if test="cargoId != null and cargoId != 0">
+                AND jt.cargo_id = #{cargoId}
+            </if>
+            <if test="productId != null and productId != 0">
+                AND jt.product_id = #{productId}
+            </if>
+        </where>
+    </select>
+</mapper>

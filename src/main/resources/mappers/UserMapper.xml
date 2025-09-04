@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dev.trackify_backend.repository.UserMapper">
+    <resultMap id="userWithModelResultMap" type="com.dev.trackify_backend.entity.User">
+        <id     property="id"       column="ut_id"/>
+        <result property="userName" column="ut_user_name"/>
+        <result property="modelId"  column="ut_model_id"/>
+        <association property="model" resultMap="modelResultMap"/>
+    </resultMap>
+
+    <resultMap id="modelResultMap" type="com.dev.trackify_backend.entity.Model">
+        <id     property="id"          column="mt_id"/>
+        <result property="modelNumber" column="mt_model_number"/>
+        <result property="volume"      column="mt_volume"/>
+    </resultMap>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="id">
+        insert into user_tb
+        values(0, #{userCode}, #{userName}, #{modelId}, #{lat}, #{lng}, now(), now())
+    </insert>
+
+    <update id="update">
+        update user_tb
+        set
+            lat = #{lat},
+            lng = #{lng},
+            update_date = now()
+        where
+            user_code = #{userCode}
+    </update>
+
+    <select id="findByUserName" resultType="com.dev.trackify_backend.entity.User">
+        select
+            id,
+            user_name as userName
+        from
+            user_tb
+        where
+            user_name = #{userName}
+    </select>
+
+    <select id="findByUserCode" resultType="com.dev.trackify_backend.entity.User">
+        select
+            id,
+            user_code as userCode,
+            user_name as userName,
+            model_id as modelId,
+            lat,
+            lng
+        from
+            user_tb
+        where
+            user_code = #{userCode}
+    </select>
+
+    <select id="findByUserCodeWithModel" resultMap="userWithModelResultMap">
+        select
+            ut.id as ut_id,
+            ut.user_name as ut_user_name,
+            ut.model_id as ut_model_id,
+            mt.id as mt_id,
+            mt.model_number as mt_model_number,
+            mt.volume as mt_volume
+        from
+            user_tb ut
+            left join model_tb mt on(ut.model_id = mt.id)
+        where
+            ut.user_code = #{userCode}
+        limit 1
+    </select>
+
+</mapper>
