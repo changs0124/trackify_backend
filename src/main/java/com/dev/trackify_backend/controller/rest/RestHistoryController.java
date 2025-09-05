@@ -17,8 +17,8 @@ public class RestHistoryController {
     @Autowired
     private RestHistoryService restHistoryService;
 
-    @GetMapping("/history")
-    public ResponseEntity<?> getHistorys(@RequestParam("cargoId") long cargoId, @RequestParam("productId") long productId) {
+    @GetMapping("/historys")
+    public ResponseEntity<?> getHistorys(@RequestParam(required = false) Long cargoId, @RequestParam(required = false) Long productId) {
         log.info("{}", cargoId);
         log.info("{}", productId);
         return ResponseEntity.ok().body(restHistoryService.getHistorys(cargoId, productId));

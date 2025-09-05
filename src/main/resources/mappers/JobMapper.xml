@@ -9,6 +9,8 @@
         <result property="productCount" column="jt_product_count" />
         <result property="paths" column="jt_paths" />
         <result property="status" column="jt_status" />
+        <result property="startDate" column="jt_start_date" />
+        <result property="endDate" column="jt_end_date" />
         <association property="cargo" resultMap="cargoResultMap" />
         <association property="product" resultMap="productResultMap" />
         <association property="user" resultMap="userResultMap" />
@@ -89,8 +91,8 @@
             jt.id as jt_id,
             jt.product_count as jt_product_count,
             jt.paths as jt_paths,
-            jt.start_time as jt_start_time,
-            jt.end_time as jt_end_time,
+            jt.start_date as jt_start_date,
+            jt.end_date as jt_end_date,
             ct.id as ct_id,
             ct.cargo_name as ct_cargo_name,
             pt.id as pt_id,
@@ -110,5 +112,33 @@
                 AND jt.product_id = #{productId}
             </if>
         </where>
+    </select>
+
+    <select id="findById" resultType="com.dev.trackify_backend.entity.Job">
+        select
+            cargo_id as cargoId,
+            product_id as productId,
+            product_count as productCount,
+            paths,
+            status
+        from
+            job_tb
+        where
+            id = #{jobId}
+    </select>
+
+    <select id="findTop3Cargos" resultType="com.dev.trackify_backend.entity.Job">
+        select
+            jt.cargo_id as cargoId,
+            count(*) as cargoCount,
+            ct.cargo_name as cargoName
+        from
+            job_tb jt
+            left join cargo_tb ct on(jt.cargo_id = ct.id)
+        group by
+            cargo_id
+        ORDER BY
+            cargoCount desc
+        limit 3
     </select>
 </mapper>

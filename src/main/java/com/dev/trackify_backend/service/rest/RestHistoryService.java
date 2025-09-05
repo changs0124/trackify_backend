@@ -15,7 +15,7 @@ public class RestHistoryService {
     @Autowired
     private JobMapper jobMapper;
 
-    public List<RespRestHistoryDto> getHistorys(long cargoId, long productId) {
+    public List<RespRestHistoryDto> getHistorys(Long cargoId, Long productId) {
         List<Job> tempHistorys = jobMapper.findByCargoIdAndProductId(cargoId, productId);
         return tempHistorys.stream().map(Job::toDto).collect(Collectors.toList());
     }

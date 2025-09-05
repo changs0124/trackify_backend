@@ -21,21 +21,27 @@ public class RestJobController {
         return ResponseEntity.ok().body(restJobService.getJob(userCode));
     }
 
+    @GetMapping("/job/running/{jobId}")
+    public ResponseEntity<?> getJobById(@PathVariable long jobId) {
+        log.info("{}", jobId);
+        return ResponseEntity.ok().body(restJobService.getJobById(jobId));
+    }
+
     @PostMapping("/job/register")
-    public ResponseEntity<?> registerJob(ReqRestJobDto reqRestJobDto) {
+    public ResponseEntity<?> registerJob(@RequestBody ReqRestJobDto reqRestJobDto) {
         log.info("{}", reqRestJobDto);
         return ResponseEntity.ok().body(restJobService.registerJob(reqRestJobDto));
     }
 
     @PutMapping("/job/update")
-    public ResponseEntity<?> updateJob(ReqRestJobDto reqRestJobDto) {
+    public ResponseEntity<?> updateJob(@RequestBody ReqRestJobDto reqRestJobDto) {
         log.info("{}", reqRestJobDto);
         restJobService.updateJob(reqRestJobDto);
         return ResponseEntity.ok().body("update job success");
     }
 
     @PutMapping("/job/complete")
-    public ResponseEntity<?> completeJob(ReqRestJobDto reqRestJobDto) {
+    public ResponseEntity<?> completeJob(@RequestBody ReqRestJobDto reqRestJobDto) {
         log.info("{}", reqRestJobDto);
         restJobService.completeJob(reqRestJobDto);
         return ResponseEntity.ok().body("complete job success");

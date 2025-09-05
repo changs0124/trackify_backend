@@ -14,6 +14,9 @@ public interface JobMapper {
     void complete(Job job);
     void cancel(long id);
 
+    Optional<Job> findById(@Param("jobId") long jobId);
     Job findByUserId(@Param("userId") long userId);
-    List<Job> findByCargoIdAndProductId(@Param("cargoId") long cargoId, @Param("productId") long productId);
+
+    List<Job> findByCargoIdAndProductId(@Param("cargoId") Long cargoId, @Param("productId") Long productId);
+    List<Job> findTop3Cargos();
 }

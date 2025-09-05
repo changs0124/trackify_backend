@@ -33,5 +33,4 @@ public class RestUserController {
         restUserService.registerUser(reqRestUserDto);
         return ResponseEntity.ok().body("register user success");
     }
-
 }

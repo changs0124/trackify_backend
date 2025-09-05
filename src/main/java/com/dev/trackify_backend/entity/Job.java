@@ -1,6 +1,8 @@
 package com.dev.trackify_backend.entity;
 
 import com.dev.trackify_backend.dto.response.rest.RespRestHistoryDto;
+import com.dev.trackify_backend.dto.response.rest.RespRestRunningJobDto;
+import com.dev.trackify_backend.dto.response.rest.RespRestTopCargoDto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,6 +25,9 @@ public class Job {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
 
+    private int cargoCount;
+    private String cargoName;
+
     private Cargo cargo;
     private Product product;
     private User user;
@@ -38,6 +43,23 @@ public class Job {
                 .CargoName(cargo.getCargoName())
                 .productName(product.getProductName())
                 .userName(user.getUserName())
+                .build();
+    }
+
+    public RespRestRunningJobDto toRunningJobDto() {
+        return RespRestRunningJobDto.builder()
+                .cargoId(cargoId)
+                .productId(productId)
+                .productCount(productCount)
+                .paths(paths)
+                .build();
+    }
+
+    public RespRestTopCargoDto toTopCargoDto() {
+        return RespRestTopCargoDto.builder()
+                .id(cargoId)
+                .cargoCount(cargoCount)
+                .cargoName(cargoName)
                 .build();
     }
 }

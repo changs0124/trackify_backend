@@ -2,6 +2,7 @@ package com.dev.trackify_backend.service.rest;
 
 import com.dev.trackify_backend.dto.request.rest.ReqRestJobDto;
 import com.dev.trackify_backend.dto.response.rest.RespRestJobDto;
+import com.dev.trackify_backend.dto.response.rest.RespRestRunningJobDto;
 import com.dev.trackify_backend.entity.Job;
 import com.dev.trackify_backend.entity.User;
 import com.dev.trackify_backend.repository.JobMapper;
@@ -21,6 +22,21 @@ public class RestJobService {
 
     @Autowired
     private UserMapper userMapper;
+
+    public RespRestRunningJobDto getJobById(long jobId) {
+        Job tempJob = jobMapper.findById(jobId)
+                .orElseThrow(() -> new NoSuchElementException("Error: NoSuchElementException"));
+
+        if(tempJob.getStatus() == 2) {
+            throw new RuntimeException("Error: Already Completed Job");
+        }
+
+        if(tempJob.getStatus() == 0) {
+            throw new RuntimeException("Error: Canceled job");
+        }
+
+        return tempJob.toRunningJobDto();
+    }
 
     public RespRestJobDto getJob(String userCode) {
         User tempUser = userMapper.findByUserCodeWithModel(userCode)
