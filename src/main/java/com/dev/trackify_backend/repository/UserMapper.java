@@ -13,8 +13,10 @@ public interface UserMapper {
                 @Param("lat") double lat,
                 @Param("lng") double lng);
 
+
     Optional<User> findByUserName(@Param("userName") String userName);
     Optional<User> findByUserCode(@Param("userCode") String userCode);
-
     Optional<User> findByUserCodeWithModel(@Param("userCode") String userCode);
+    Optional<User> findUserNameByUserCode(@Param("userCode") String userCode);
+
 }

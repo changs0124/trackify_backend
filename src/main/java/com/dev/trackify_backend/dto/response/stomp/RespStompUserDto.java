@@ -11,9 +11,9 @@ import java.time.Instant;
 public class RespStompUserDto {
     private final String type = "PRESENCE";
     private String userCode;
+    private String userName;
     private double lat;
     private double lng;
-    private String status;       // ONLINE, WORKING, UNSTABLE
     private long rtt;            // 핑 왕복(ms)
     private Boolean working;
     private Instant respTime;
@@ -21,9 +21,9 @@ public class RespStompUserDto {
     public static RespStompUserDto from(PresenceStatus.Presence p) {
         return RespStompUserDto.builder()
                 .userCode(p.getUserCode())
+                .userName(p.getUserName())
                 .lat(p.getLat())
                 .lng(p.getLng())
-                .status(p.getStatus().name())
                 .rtt(p.getLastPingRtt())
                 .working(p.isWorking())
                 .respTime(Instant.now())

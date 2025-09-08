@@ -2,6 +2,7 @@ package com.dev.trackify_backend.controller.stomp;
 
 import com.dev.trackify_backend.dto.request.stomp.ReqStompPingDto;
 import com.dev.trackify_backend.dto.request.stomp.ReqStompUserDto;
+import com.dev.trackify_backend.dto.request.stomp.ReqStompWorkingDto;
 import com.dev.trackify_backend.dto.response.stomp.RespStompUserDto;
 import com.dev.trackify_backend.service.stomp.StompService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,12 @@ public class StompController {
     public void update(@Payload ReqStompUserDto reqStompUserDto) {
         log.info("{}", reqStompUserDto);
         stompService.update(reqStompUserDto);
+    }
+
+    @MessageMapping("/working")
+    public void setWorking(ReqStompWorkingDto reqStompWorkingDto) {
+        log.info("{}", reqStompWorkingDto);
+        stompService.working(reqStompWorkingDto);
     }
 
     @MessageMapping("/ping")

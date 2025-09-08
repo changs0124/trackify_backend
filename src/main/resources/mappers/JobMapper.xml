@@ -91,6 +91,7 @@
             jt.id as jt_id,
             jt.product_count as jt_product_count,
             jt.paths as jt_paths,
+            jt.status as jt_status,
             jt.start_date as jt_start_date,
             jt.end_date as jt_end_date,
             ct.id as ct_id,

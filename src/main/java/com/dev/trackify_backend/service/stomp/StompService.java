@@ -1,5 +1,6 @@
 package com.dev.trackify_backend.service.stomp;
 
+import com.dev.trackify_backend.dto.request.stomp.ReqStompWorkingDto;
 import com.dev.trackify_backend.dto.response.stomp.UserStateDto;
 
 import com.dev.trackify_backend.dto.request.stomp.ReqStompPingDto;
@@ -58,6 +59,7 @@ public class StompService {
         // PresenceService에 접속/위치 위임: 상태 엔진이 lastMsgAt, status(ONLINE) 등을 관리/브로드캐스트.
         presenceStatus.upsertOnConnect(
                 tempUser.getUserCode(),
+                tempUser.getUserName(),
                 reqStompUserDto.getLat(),
                 reqStompUserDto.getLng());
     }
@@ -82,6 +84,11 @@ public class StompService {
                 reqStompUserDto.getLat(),
                 reqStompUserDto.getLng()
         );
+    }
+
+    public void working(ReqStompWorkingDto reqStompWorkingDto) {
+        log.debug("[WORKING] {}", reqStompWorkingDto);
+        presenceStatus.setWorking(reqStompWorkingDto.getUserCode(), reqStompWorkingDto.isWorking());
     }
 
     public void ping(ReqStompPingDto reqStompPingDto) {

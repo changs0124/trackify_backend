@@ -9,7 +9,7 @@ public class ReqStompUserDto {
     private String userCode;
     private double lat;
     private double lng;
-    private Long clientTime;
     private Boolean working;
+    private Long clientTime;
     private Instant respTime;
 }

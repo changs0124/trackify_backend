@@ -18,7 +18,6 @@ public class RestModelController {
 
     @GetMapping("/models")
     public ResponseEntity<?> getModels() {
-        log.info("models");
         return ResponseEntity.ok().body(restModelService.getModelList());
     }
 }

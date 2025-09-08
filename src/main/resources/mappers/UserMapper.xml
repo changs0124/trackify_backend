@@ -72,4 +72,13 @@
         limit 1
     </select>
 
+    <select id="findUserNameByUserCode" resultType="com.dev.trackify_backend.entity.User">
+        select
+            user_name as userName
+        from
+            user_tb
+        where
+            user_code = #{userCode}
+    </select>
+
 </mapper>
