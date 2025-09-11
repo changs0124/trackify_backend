@@ -54,7 +54,7 @@ public class StompController {
 
     @MessageMapping("/presence/snapshot")
     @SendToUser("/queue/presence")
-    public List<RespStompUserDto> snapshot() {
-        return stompService.snapshot();
+    public List<RespStompUserDto> snapshot(@Payload ReqStompPingDto reqStompPingDto) {
+        return stompService.snapshot(reqStompPingDto.getUserCode());
     }
 }

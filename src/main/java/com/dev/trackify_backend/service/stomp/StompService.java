@@ -118,7 +118,7 @@ public class StompService {
         presenceStatus.disconnect(userCode, lat, lng);
     }
 
-    public List<RespStompUserDto> snapshot() {
-        return presenceStatus.snapshot().stream().map(RespStompUserDto::from).toList();
+    public List<RespStompUserDto> snapshot(String userCode) {
+        return presenceStatus.snapshot(userCode);
     }
 }

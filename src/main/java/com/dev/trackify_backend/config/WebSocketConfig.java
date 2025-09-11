@@ -2,20 +2,33 @@ package com.dev.trackify_backend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.server.ServerHttpRequest;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
-import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.config.annotation.*;
 import org.springframework.web.socket.server.standard.TomcatRequestUpgradeStrategy;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
+import org.springframework.scheduling.TaskScheduler;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.security.Principal;
+import java.util.Map;
+import java.util.UUID;
 
 @Configuration
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
-    // SimpleBroker 하트비트 전송용 스케줄러(가벼운 작업이므로 1스레드로 충분)
+    // 간단한 Principal 구현
+    static final class StompPrincipal implements Principal {
+        private final String name;
+        StompPrincipal(String name) { this.name = name; }
+        @Override public String getName() { return name; }
+    }
+
     @Bean(name = "wsBrokerTaskScheduler")
     public TaskScheduler wsBrokerTaskScheduler() {
         ThreadPoolTaskScheduler ts = new ThreadPoolTaskScheduler();
@@ -25,24 +38,47 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         return ts;
     }
 
+    // ★ Handshake에서 Principal을 생성
+    @Bean
+    public DefaultHandshakeHandler userHandshakeHandler() {
+        return new DefaultHandshakeHandler(new TomcatRequestUpgradeStrategy()) {
+            @Override
+            protected Principal determineUser(ServerHttpRequest request,
+                                              WebSocketHandler wsHandler,
+                                              Map<String, Object> attributes) {
+                MultiValueMap<String, String> qs =
+                        UriComponentsBuilder.fromUri(request.getURI()).build().getQueryParams();
+                String raw = (qs != null ? qs.getFirst("userCode") : null);
+                String code = (raw == null || raw.isBlank())
+                        ? "anon-" + UUID.randomUUID()
+                        : raw.trim().toLowerCase();
+                return new StompPrincipal(code); // ← SimpUserRegistry에 이 이름으로 올라감
+            }
+        };
+    }
+
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // RN + stompjs 호환을 위해 STOMP 서브프로토콜 명시
-        DefaultHandshakeHandler hs = new DefaultHandshakeHandler(new TomcatRequestUpgradeStrategy());
+        var hs = userHandshakeHandler();
+        // STOMP 서브프로토콜 유지
         hs.setSupportedProtocols("v12.stomp","v11.stomp","v10.stomp");
 
         registry.addEndpoint("/ws")
                 .setHandshakeHandler(hs)
-                .setAllowedOriginPatterns("*"); // CORS: 필요한 도메인만 허용하도록 차후 좁히는 걸 권장
-                                                // SockJS 미사용(RN은 순수 WebSocket 사용)
+                .setAllowedOriginPatterns("*"); // 필요시 제한
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.setApplicationDestinationPrefixes("/app");
-
         var simple = registry.enableSimpleBroker("/topic", "/queue");
         simple.setTaskScheduler(wsBrokerTaskScheduler());
-        simple.setHeartbeatValue(new long[]{10_000, 10_000}); // [server > client, client > server]
+        simple.setHeartbeatValue(new long[]{10_000, 10_000});
+        // registry.setUserDestinationPrefix("/user"); // 기본값 /user
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        // 여기는 비워도 됩니다(Handshake에서 이미 Principal 부여)
     }
 }

@@ -2,22 +2,23 @@ package com.dev.trackify_backend.status;
 
 import com.dev.trackify_backend.dto.response.stomp.RespStompLeaveDto;
 import com.dev.trackify_backend.dto.response.stomp.RespStompUserDto;
-import com.dev.trackify_backend.entity.User;
 import com.dev.trackify_backend.repository.UserMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.messaging.simp.user.SimpUser;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -25,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 주기적으로 점검하여 실시간 브로드캐스트하는 서비스.
  * 상태 표시는 boolean working 만 사용(working=true 파랑, false 초록).
  */
+@Slf4j
 @Service
 @EnableScheduling
 @RequiredArgsConstructor
@@ -32,6 +34,9 @@ public class PresenceStatus {
 
     @Autowired
     private SimpMessagingTemplate broker;
+
+    @Autowired
+    private SimpUserRegistry simpUserRegistry;
 
     @Autowired
     private UserMapper userMapper;
@@ -94,9 +99,20 @@ public class PresenceStatus {
         return new double[]{ Math.toDegrees(lat2), Math.toDegrees(lon2) };
     }
 
+    private void sendToOthers(String excludeUserCode, Object payload) {
+        log.info("userCount={}", simpUserRegistry.getUserCount());
+        for (SimpUser su : simpUserRegistry.getUsers()) {
+            log.info("{}", excludeUserCode);
+            log.info("{}", simpUserRegistry.getUsers().stream().map(SimpUser::getName).toList());
+            String name = su.getName();            // Principal.getName()
+            if (name.equals(excludeUserCode)) continue;
+            // 모든 세션으로 전송 (특정 세션으로만 보내려면 sessionId 헤더 활용)
+            broker.convertAndSendToUser(su.getName(), "/queue/events", payload);
+        }
+    }
+
     /** 접속/재접속 시 upsert + 브로드캐스트 */
     public Presence upsertOnConnect(String userCode, String userName, double lat, double lng) {
-
         var p = presences.compute(userCode, (k, old) -> {
             long now = System.currentTimeMillis();
             if (old == null) {
@@ -119,7 +135,7 @@ public class PresenceStatus {
             return old;
         });
 
-        broker.convertAndSend("/topic/all", RespStompUserDto.from(p));
+        sendToOthers(userCode, RespStompUserDto.from(p));
         return p;
     }
 
@@ -142,7 +158,7 @@ public class PresenceStatus {
             p.setLastBroadcastAt(now);
             p.setLastLat(lat);
             p.setLastLng(lng);
-            broker.convertAndSend("/topic/all", RespStompUserDto.from(p));
+            sendToOthers(userCode, RespStompUserDto.from(p));
         }
         return p;
     }
@@ -154,7 +170,8 @@ public class PresenceStatus {
 
         p.setWorking(working);
         p.setLastMsgAt(System.currentTimeMillis());
-        broker.convertAndSend("/topic/all", RespStompUserDto.from(p));
+        log.info("{}", p);
+        sendToOthers(userCode, RespStompUserDto.from(p));
         return p;
     }
 
@@ -179,15 +196,20 @@ public class PresenceStatus {
         if (lat != null && lng != null) {
             try { userMapper.update(userCode, lat, lng); } catch (Exception ignore) {}
         }
-        broker.convertAndSend("/topic/all",
-                RespStompLeaveDto.builder()
-                        .userCode(userCode)
-                        .respTime(Instant.now())
-                        .build());
+        sendToOthers(userCode, RespStompLeaveDto.builder()
+                .userCode(userCode)
+                .respTime(Instant.now())
+                .build());
     }
 
     /** 전체 스냅샷 반환(REST) */
-    public Collection<Presence> snapshot() { return presences.values(); }
+    public List<RespStompUserDto> snapshot(String userCode) {
+        return presences.values().stream()
+                .filter(p -> !p.getUserCode().equals(userCode))
+                .filter(p -> userMapper.existsByUserCode(p.getUserCode()))
+                .map(RespStompUserDto::from)
+                .toList();
+    }
 
     @PostConstruct
     public void initSamples() {
@@ -235,7 +257,7 @@ public class PresenceStatus {
             long idle = now - p.getLastMsgAt();
             if (idle > OFFLINE_AFTER) {
                 presences.remove(p.getUserCode());
-                broker.convertAndSend("/topic/all",
+                sendToOthers(p.getUserCode(),
                         RespStompLeaveDto.builder()
                                 .userCode(p.getUserCode())
                                 .respTime(Instant.now())

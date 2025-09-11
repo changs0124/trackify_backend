@@ -13,6 +13,7 @@ public interface UserMapper {
                 @Param("lat") double lat,
                 @Param("lng") double lng);
 
+    boolean existsByUserCode(@Param("userCode") String userCode);
 
     Optional<User> findByUserName(@Param("userName") String userName);
     Optional<User> findByUserCode(@Param("userCode") String userCode);

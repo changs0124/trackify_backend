@@ -80,5 +80,15 @@
         where
             user_code = #{userCode}
     </select>
+    <select id="existsByUserCode" resultType="java.lang.Boolean">
+        select exists (
+            select
+                1
+            from
+                user_tb
+            where
+                user_code = #{userCode}
+        )
+    </select>
 
 </mapper>
