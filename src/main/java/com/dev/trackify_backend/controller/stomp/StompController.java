@@ -5,7 +5,6 @@ import com.dev.trackify_backend.dto.request.stomp.ReqStompUserDto;
 import com.dev.trackify_backend.dto.request.stomp.ReqStompWorkingDto;
 import com.dev.trackify_backend.dto.response.stomp.RespStompUserDto;
 import com.dev.trackify_backend.service.stomp.StompService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -17,7 +16,6 @@ import java.util.List;
 
 @Slf4j
 @Controller
-@RequiredArgsConstructor
 public class StompController {
 
     @Autowired
